@@ -56,7 +56,7 @@ jobs:
                         ~/venv/bin/pip install -e '.[dev]'
             -   run:
                     name: "Check migrations"
-                    command: ~/venv/bin/python django-admin makemigrations --dry-run --check
+                    command: ~/venv/bin/django-admin makemigrations --dry-run --check
             -   run:
                     name: "Flake8"
                     command: ~/venv/bin/flake8 wapipelines
