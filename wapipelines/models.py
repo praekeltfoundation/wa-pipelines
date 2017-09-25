@@ -66,7 +66,6 @@ def generate_secret():
 
 
 class Pipeline(models.Model):
-
     user = models.ForeignKey('auth.User')
     name = models.CharField(max_length=255)
     uuid = models.UUIDField(default=uuid4)
