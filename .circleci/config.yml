@@ -76,7 +76,7 @@ jobs:
                             echo "username=$PYPI_USERNAME" >> ~/.pypirc
                             echo "password=$PYPI_PASSWORD" >> ~/.pypirc
                             python setup.py sdist bdist_wheel
-                            twine upload dist/*
+                            ~/venv/bin/twine upload dist/*
                         fi
             -   save_cache:
                     key: deps-py27-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
