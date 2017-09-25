@@ -6,7 +6,7 @@ jobs:
             -   image: circleci/python:3.6.1
                 environment:
                     PIP_EXTRA_INDEX_URL: https://jessie.wheelhouse.praekelt.org/simple/
-            -   image: mdillon/postgis:9.4
+            -   image: circleci/postgres:9.4
                 environment:
                     POSTGRES_USER: circleci
                     POSTGRES_DB: wa-pipelines
@@ -16,11 +16,6 @@ jobs:
             -   restore_cache:
                     keys:
                         - deps-py36-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
-            -   run:
-                    name: "Install GIS extensions"
-                    command: |
-                        sudo apt-get update
-                        sudo apt-get install -y gdal-bin
             -   run:
                     name: "Install"
                     command: |
@@ -42,7 +37,7 @@ jobs:
             -   image: circleci/python:2.7
                 environment:
                     PIP_EXTRA_INDEX_URL: https://jessie.wheelhouse.praekelt.org/simple/
-            -   image: mdillon/postgis:9.4
+            -   image: circleci/postgres:9.4
                 environment:
                     POSTGRES_USER: circleci
                     POSTGRES_DB: wa-pipelines
