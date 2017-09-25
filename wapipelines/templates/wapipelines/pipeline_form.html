@@ -1,0 +1,41 @@
+{% extends "app.html" %}
+
+{% block content_app %}
+<div class="container-fluid">
+  {% if object %}
+    <h1>Update pipeline {{object}}</h1>
+  {% else %}
+    <h1>Add a new pipeline</h1>
+  {% endif %}
+  <form enctype="multipart/form-data" action="" method="post">{% csrf_token %}
+
+    <div class="form-group {% if form.errors.name %}has-error{% endif %}">
+      {{form.name.label_tag}}
+      {{form.name}}
+      {% for error in form.errors.name %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+    </div>
+
+    <div class="form-group {% if form.errors.endpoint %}has-error{% endif %}">
+      {{form.endpoint.label_tag}}
+      {{form.endpoint}}
+      {% for error in form.errors.endpoint %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+    </div>
+
+    <div class="form-group {% if form.errors.active %}has-error{% endif %}">
+      {{form.active.label_tag}}
+      {{form.active}}
+      {% for error in form.errors.active %}
+        <span class="help-block">{{ error }}</span>
+      {% endfor %}
+    </div>
+
+    <button type="submit" class="btn btn-primary">Submit</button>
+    or
+    <a href="{% url 'pipeline:list' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

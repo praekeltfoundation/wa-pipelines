@@ -1,0 +1,102 @@
+<div id="id_name_field" class="form-group {% if form.errors.name %}has-error{% endif %}">
+  {{form.name.label_tag}}
+  {{form.name}}
+  {% for error in form.errors.name %}
+    <span class="help-block">{{ error }}</span>
+  {% endfor %}
+</div>
+
+<div id="id_url_field" class="form-group {% if form.errors.url %}has-error{% endif %}">
+  {{form.url.label_tag}}
+  {{form.url}}
+  <p class="help-block">{{form.fields.url.help_text}}</p>
+  {% for error in form.errors.url %}
+    <span class="help-block">{{ error }}</span>
+  {% endfor %}
+  <p>
+    <br/>
+    <a role="button" class="btn btn-info" data-toggle="collapse" href="#id_headers_field" aria-expanded="false" aria-controls="id_headers_field">
+      This step requires extra HTTP headers.
+    </a>
+  </p>
+</div>
+
+<div id="id_headers_field" class="form-group {% if form.errors.headers %}has-error{% endif %} collapse">
+  {{form.headers.label_tag}}
+  {{form.headers}}
+  {% for error in form.errors.headers %}
+    <span class="help-block">{{ error }}</span>
+  {% endfor %}
+</div>
+
+<div id="id_inputs_field" class="form-group {% if form.errors.inputs %}has-error{% endif %}">
+  {{form.inputs.label_tag}}
+  {{form.inputs}}
+  {% for error in form.errors.inputs %}
+    <span class="help-block">{{ error }}</span>
+  {% endfor %}
+</div>
+
+<div id="id_outputs_field" class="form-group {% if form.errors.outputs %}has-error{% endif %}">
+  {{form.outputs.label_tag}}
+  {{form.outputs}}
+  {% for error in form.errors.outputs %}
+    <span class="help-block">{{ error }}</span>
+  {% endfor %}
+</div>
+
+<div id="id_timeout_field" class="form-group {% if form.errors.timeout %}has-error{% endif %}">
+  {{form.timeout.label_tag}}
+  {{form.timeout}}
+  {% for error in form.errors.timeout %}
+    <span class="help-block">{{ error }}</span>
+  {% endfor %}
+</div>
+
+<script>
+  var url_field = $('#{{form.url.id_for_label}}');
+  var headers_field = $('#{{form.headers.id_for_label}}');
+  var inputs_field = $('#{{form.inputs.id_for_label}}');
+  var outputs_field = $('#{{form.outputs.id_for_label}}');
+
+  var parse_headers = function(header) {
+    var data = {};
+    header.split("\n").forEach(function (line) {
+      if(line) {
+        var parts = line.split(":");
+        var key = parts[0];
+        var value = parts[1];
+        if(key && value) {
+          data[key] = value;
+        }
+      }
+    });
+    return data;
+  }
+
+  var introspect_hook_url = function () {
+    url_field.addClass('glyphicon glyphicon-time');
+    $.ajax(
+      url_field.val(),
+      {
+        accepts: 'application/json',
+        crossDomain: true,
+        headers: parse_headers(headers_field.val()),
+        method: 'GET',
+      }
+    ).done(function (data) {
+      inputs_field.val(data.inputs.join(", "));
+      outputs_field.val(data.outputs.join(", "));
+      url_field.removeClass('glyphicon glyphicon-time');
+    });
+  };
+
+  url_field.change(function() {
+    introspect_hook_url();
+  });
+
+  headers_field.change(function() {
+    introspect_hook_url();
+  });
+</script>
+

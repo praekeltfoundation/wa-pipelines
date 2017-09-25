@@ -1,0 +1,83 @@
+version: 2
+jobs:
+    build_py3:
+        working_directory: ~/app
+        docker:
+            -   image: circleci/python:3.6.1
+                environment:
+                    PIP_EXTRA_INDEX_URL: https://jessie.wheelhouse.praekelt.org/simple/
+            -   image: mdillon/postgis:9.4
+                environment:
+                    POSTGRES_USER: circleci
+                    POSTGRES_DB: wa-pipelines
+                    POSTGRES_PASSWORD: ""
+        steps:
+            -   checkout
+            -   restore_cache:
+                    keys:
+                        - deps-py36-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            -   run:
+                    name: "Install GIS extensions"
+                    command: |
+                        sudo apt-get update
+                        sudo apt-get install -y gdal-bin
+            -   run:
+                    name: "Install"
+                    command: |
+                        python3 -m venv ~/venv/
+                        ~/venv/bin/pip install -e '.[dev]'
+            -   run:
+                    name: "Pytest"
+                    command: ~/venv/bin/py.test wapipelines --junitxml=junit/py36.xml
+            -   save_cache:
+                    key: deps-py36-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+                    paths:
+                        - ~/.cache/pip/
+                        - ~/venv/
+            -   store_test_results:
+                    path: ~/app/junit/
+    build_py2:
+        working_directory: ~/app
+        docker:
+            -   image: circleci/python:2.7
+                environment:
+                    PIP_EXTRA_INDEX_URL: https://jessie.wheelhouse.praekelt.org/simple/
+            -   image: mdillon/postgis:9.4
+                environment:
+                    POSTGRES_USER: circleci
+                    POSTGRES_DB: wa-pipelines
+                    POSTGRES_PASSWORD: ""
+        steps:
+            -   checkout
+            -   restore_cache:
+                    keys:
+                        - deps-py27-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+            -   run:
+                    name: "Install Virtualenv"
+                    command: |
+                        sudo pip install virtualenv
+                        virtualenv ~/venv/
+                        ~/venv/bin/pip install -e '.[dev]'
+            -   run:
+                    name: "Check migrations"
+                    command: ~/venv/bin/python manage.py makemigrations --dry-run --check
+            -   run:
+                    name: "Flake8"
+                    command: ~/venv/bin/flake8 wapipelines
+            -   run:
+                    name: "Pytest"
+                    command: ~/venv/bin/py.test wapipelines --junitxml=junit/py27.xml
+            -   save_cache:
+                    key: deps-py27-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
+                    paths:
+                        - ~/.cache/pip/
+                        - ~/venv/
+
+workflows:
+    version: 2
+    build_and_test:
+        jobs:
+            - build_py3
+            - build_py2:
+                requires:
+                    - build_py3

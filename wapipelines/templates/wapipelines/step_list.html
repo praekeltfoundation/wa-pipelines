@@ -1,0 +1,345 @@
+{% extends "app.html" %}
+{% load static %}
+{% load wapipeline_tags %}
+
+{% block script %}
+  <script src="{% static 'viz-js/viz.js' %}"></script>
+{% endblock %}
+
+{% block content_app %}
+
+  <div id="pipeline-{{pipeline.pk}}-viz"></div>
+  <script type="text/vnd.graphviz" id="pipeline-{{pipeline.pk}}-dot">
+    {{ pipeline.to_pydot.to_string|safe }}
+  </script>
+  <script>
+    $(function () {
+      $('#pipeline-{{pipeline.pk}}-viz')
+        .html(
+          Viz(
+            $('#pipeline-{{pipeline.pk}}-dot').html(), 'svg'));
+    });
+  </script>
+  <style>
+    /* LEEEERROOYYY JENKINSSSS */
+    #pipeline-{{pipeline.pk}}-viz svg {
+      display: block;
+      margin: auto;
+    }
+  </style>
+
+  <div class="container-fluid">
+    <div class="pull-right">
+      <!-- Button trigger modal -->
+      <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#addStepModal">
+        Add a Step
+      </button>
+      <button type="button" class="btn btn-success btn-lg" data-toggle="modal" data-target="#runPipelineModal">
+        Run Pipeline
+      </button>
+    </div>
+  </div>
+</div>
+
+  <!-- addStepModal -->
+  <div class="modal fade" id="addStepModal" tabindex="-1" role="dialog" aria-labelledby="addStepModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form enctype="multipart/form-data" action="{% url 'pipeline:step_create' pipeline_pk=pipeline.pk %}" method="post">
+          {% csrf_token %}
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="addStepModalLabel">Add a Step</h4>
+          </div>
+          <div class="modal-body">
+            {% include "wapipelines/_step_form.html" %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Add</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- end addStepModal -->
+
+  <!-- runPipelineModal -->
+  <div class="modal fade" id="runPipelineModal" tabindex="-1" role="dialog" aria-labelledby="runPipelineModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form action="{% url 'pipeline:run' pk=pipeline.pk %}" method="post">
+          {% csrf_token %}
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="runPipelineModalLabel">Run Pipeline</h4>
+          </div>
+          <div class="modal-body">
+            {% include "wapipelines/_pipeline_run_form.html" with form=run_form %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary">Run</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- end runPipelineModal -->
+
+  <!-- removeStepModal -->
+  {% for step in pipeline.step_set.all %}
+  <div class="modal fade" id="removeStepModal{{step.uuid}}" tabindex="-1" role="dialog" aria-labelledby="removeStepModalLabel{{step.uuid}}">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <form action="{% url 'pipeline:step_delete' pipeline_pk=pipeline.pk pk=step.pk %}" method="post">
+          {% csrf_token %}
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="removeStepModalLabel{{step.uuid}}">Remove Step</h4>
+          </div>
+          <div class="modal-body">
+              {% include "wapipelines/_step_confirm_delete.html" %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-warning">Remove</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <!-- end removeStepModal -->
+
+  <div class="container-fluid">
+
+    <h2>{{page_obj.paginator.count}} Step{{page_obj.paginator.count|pluralize}}</h2>
+
+  {% with pipeline.get_cycles as cycles %}
+  {% if cycles %}
+  <div class="alert alert-warning">
+    <p>
+      <strong>Heads up!</strong>
+      Your pipeline seems to have a loop which would mean it
+      will likely not complete.
+    </p>
+    <p>
+      Please review the inputs and outputs between and
+      fix any circular connections:
+      <ol>
+      {% for step in cycles %}
+        <li><strong>{{ step|oxford_join }}</strong></li>
+      {% endfor %}
+      </ol>
+    </p>
+  </div>
+  {% else %}
+    {% if pipeline.step_set.exists %}
+    <div class="alert alert-info">
+      <strong>OK!</strong>
+      Your pipeline is looking healthy
+      {% if pipeline.endpoint %}
+      {% with pipeline.exit_points as exit_points %}
+      and outputs generated from {% if exit_points|length > 1 %}one of{% endif %}
+      {% for step in pipeline.exit_points %}
+        {% if not forloop.last %}
+          <strong>{{step.name}}</strong>,
+        {% elif forloop.last and exit_points|length > 1 %}
+          or <strong>{{step.name}}</strong>
+        {% else %}
+          <strong>{{step.name}}</strong>
+        {% endif %}
+      {% endfor %}
+      will be delivered to via HTTP POST <strong>{{pipeline.endpoint}}</strong>.
+      {% endwith %}
+      {% endif %}
+      .
+    </div>
+    {% else %}
+      <div class="alert alert-info">
+        <strong>OK!</strong> Your pipeline is empty, please add some steps.
+      </div>
+    {% endif %}
+  {% endif %}
+  {% endwith %}
+  <!-- StepList -->
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Inputs</th>
+                  <th>Outputs</th>
+                  <th>URL</th>
+                  <th>Timeout</th>
+                  <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in page_obj %}
+                <tr>
+                    <td><a href="{% url 'pipeline:step_update' pipeline_pk=pipeline.pk pk=step.pk %}">{{step.name}}</a></td>
+                    <td>{{step.inputs|join:", "}}</td>
+                    <td>{{step.outputs|join:", "}}</td>
+                    <td>{{step.url}}</td>
+                    <td>{{step.get_timeout_display}}</td>
+                    <td>
+                      <button type="button" class="btn btn-default" data-toggle="modal" data-target="#removeStepModal{{step.uuid}}">
+                        Remove
+                      </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+        {% if page_obj.paginator.num_pages > 1 %}
+            {% include "web/_pagination.html" %}
+        {% endif %}
+        <!-- end StepList -->
+  </div>
+  <div class="container-fluid">
+    <h4>Pipeline API Calls</h4>
+    <p>
+      Run your pipeline using API with the following HTTP Request.
+      {% if pipeline.requires_inputs %}
+        Keep in mind that one of the following input sets may be required:
+        <ul>
+        {% for inputs in pipeline.allowable_inputs %}
+          {% if inputs %}
+            <li><code>{{inputs|oxford_join}}</code></li>
+          {% endif %}
+        {% endfor %}
+        </ul>
+      {% endif %}
+      <pre>$ curl -X POST \
+      -H 'Authorization: Token {{user.auth_token.key}}' \
+      -H 'Content-Type: application/json' \
+      -H 'Accept: application/json' \
+      -d '{"payload": {}, "inputs": {}}' \
+      {{site_root}}{% url 'api:pipeline-run' uuid=pipeline.uuid %}
+      </pre>
+      <p>
+        The JSON payload for all outbound requests are signed with <code>HMAC-SHA512</code>
+        using <code>{{pipeline.secret}}</code> as the secret. This can be read from the <code>X-WA-Sign</code> HTTP header
+        and used to cryptographically verify the request.
+      </p>
+      <p>
+        The following headers are guaranteed for every pipeline request made.
+        <ol>
+          <li><code>Content-Type</code> as <code>application/json</code></li>
+          <li><code>X-WA-Sign</code> as <code>hex digest</code></li>
+          <li><code>X-WA-Pipeline</code> as <code>uuid4</code></li>
+          <li><code>X-WA-Run</code> as <code>uuid4</code></li>
+          <li><code>X-WA-Step</code> as <code>uuid4</code></li>
+        </ol>
+      </p>
+    </p>
+  </div>
+  <div class="container-fluid">
+    <h4>Pipeline Results</h4>
+    <div class="table-responsive">
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Duration</th>
+            <th>Completed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in runs %}
+          {% with run.is_completed as is_completed %}
+          <tr class="{{ is_completed|yesno:"success,danger" }}">
+            <td><a href="#collapseRun{{run.uuid}}" role="button" data-toggle="collapse" aria-expanded="false" arial-controls="collapseRun{{run.uuid}}">{{run.created_at}}</a></td>
+            <td>{{run.duration}}</td>
+            <td>
+              {% if is_completed %}
+                <span class="glyphicon glyphicon-ok" aria-hidden="true"></span>
+                <span class="sr-only">Yes</span>
+              {% else %}
+                <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                <span class="sr-only">No</span>
+              {% endif %}
+            </td>
+          </tr>
+          <tr class="collapse" id="collapseRun{{run.uuid}}">
+            <td colspan="3">
+              <h4>Payload</h4>
+              <div class="well">
+                <pre><code>{{run.payload|json_dump}}</code></pre>
+              </div>
+              <h4>Outputs</h4>
+              <div class="well">
+                {% for key,values in run.get_outputs.items %}
+                  <p>
+                    <strong>{{key}}</strong>:
+                    {{values|json_dump}}
+                  </p>
+                {% endfor %}
+              </div>
+              {% with run.get_errors as errors %}
+              {% if errors %}
+                <div class="alert alert-danger" role="alert">
+                  <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+                  <span class="sr-only">Alert:</span> This run ran into some errors and was not able to complete.
+                </div>
+                <div class="well">
+                  {% for result in errors %}
+                    <table class="table table-bordered table-striped">
+                      <tr>
+                        <th>Step</th>
+                        <td>{{result.step.name}}</td>
+                      </tr>
+                      <tr>
+                        <th>Error</th>
+                        <td><code>{{result.error}}</td>
+                      </tr>
+                      <tr>
+                        <th>Payload</th>
+                        <td><pre>{{run.payload|json_dump}}</pre></td>
+                      </tr>
+                      <tr>
+                        <th>Inputs</th>
+                        <td><pre>{{result.inputs|json_dump}}</pre></td>
+                      </tr>
+                      <tr>
+                        <th>Outputs</th>
+                        <td><pre>{{result.outputs|json_dump}}</pre></td>
+                      </tr>
+                      <tr>
+                        <th>Duration</th>
+                        <td><pre>{{result.duration}}</pre></td>
+                      </tr>
+                      <tr>
+                        <th>Response Code</th>
+                        <td>{{result.response_code}}</td>
+                      </tr>
+                      <tr>
+                        <th>cURL</th>
+                        <td>
+                          Attempt to retry this step manually with the following cURL command:
+                          <pre><code>{% spaceless %}
+curl \
+{% for key, value in result.get_step_headers.items %}  -H '{{key}}: {{value}}' \
+{% endfor %} -d '{{result.get_step_data|json_dump}}' \
+{{result.step.url}}
+                          {% endspaceless %}
+                          </code></pre>
+                        </td>
+                      </tr>
+                    </table>
+                  {% endfor %}
+                {% endif %}
+                </div>
+              {% endwith %}
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

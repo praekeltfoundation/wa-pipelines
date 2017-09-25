@@ -1,0 +1,19 @@
+{% extends "app.html" %}
+
+{% block content_app %}
+<div class="container-fluid">
+    {% if object %}
+      <h1>Update step</h1>
+    {% else %}
+      <h1>Create a step</h1>
+    {% endif %}
+  <form action="" method="post">{% csrf_token %}
+    {% include "wapipelines/_step_form.html" %}
+    {% if object %}
+        <button type="submit" class="btn btn-primary">Update</button>
+    {% else %}
+        <button type="submit" class="btn btn-primary">Create</button>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

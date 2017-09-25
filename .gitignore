@@ -1,0 +1,16 @@
+*.pyc
+*.egg-info/
+.env
+node_modules/
+static/
+.vscode/
+.coverage
+.coverage/*
+.DS_Store
+.cache/
+htmlcov/
+media/
+.tox/
+CACHE/
+.coverage.*
+*.pid

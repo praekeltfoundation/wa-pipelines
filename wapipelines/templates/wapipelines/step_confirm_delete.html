@@ -1,0 +1,11 @@
+{% extends "app.html" %}
+
+{% block content_app %}
+<div class="container-fluid">
+  <h1>Remove step {{step.name}}</h1>
+  <form action="" method="post">{% csrf_token %}
+    {% include "wapipelines/_step_confirm_delete.html" with object=step %}
+    <button type="submit" class="btn btn-warning">Remove</button>
+  </form>
+</div>
+{% endblock %}

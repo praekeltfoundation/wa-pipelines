@@ -1,0 +1,38 @@
+{% extends "app.html" %}
+
+{% block content_app %}
+  <div class="container-fluid">
+    <h2>{{page_obj.paginator.count}} Pipeline{{page_obj.paginator.count|pluralize}}</h2>
+
+    <div class="table-responsive">
+      <form method="get" action="">
+        <div class="form-group pull-right">
+          <a role="button" class="btn btn-primary" href="{% url 'pipeline:create' %}">Add Pipeline</a>
+        </div>
+      </form>
+      <span class="counter pull-right"></span>
+      <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>Pipeline</th>
+            <th>Active</th>
+            <th>Steps</th>
+            <th>Endpoint</th>
+            <th>Edit</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pipeline in object_list %}
+          <tr>
+            <td><a href="{% url 'pipeline:step_list' pipeline_pk=pipeline.pk %}">{{pipeline.name}}</a></td>
+            <td>{{pipeline.active|yesno}}</td>
+            <td>{{pipeline.step_set.count}}</td>
+            <td>{{pipeline.endpoint}}</td>
+            <td><a href="{% url 'pipeline:update' pk=pipeline.pk %}">Edit</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

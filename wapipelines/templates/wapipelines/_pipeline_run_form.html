@@ -1,0 +1,7 @@
+<div id="id_data_field" class="form-group {% if form.errors.data %}has-error{% endif %}">
+  {{form.data.label_tag}}
+  {{form.data}}
+  {% for error in form.errors.data %}
+    <span class="help-block">{{ error }}</span>
+  {% endfor %}
+</div>
