@@ -31,7 +31,7 @@ jobs:
                         - ~/venv/
             -   store_test_results:
                     path: ~/app/junit/
-    build_py2:
+    build:
         working_directory: ~/app
         docker:
             -   image: circleci/python:2.7
