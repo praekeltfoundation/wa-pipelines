@@ -63,6 +63,21 @@ jobs:
             -   run:
                     name: "Pytest"
                     command: ~/venv/bin/py.test wapipelines --junitxml=junit/py27.xml
+            -   deploy:
+                    name: Deploy
+                    command: |
+                        VERSION=$(git describe)
+                        if git describe | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" && git branch | grep "\* develop";
+                        then
+                            # build package and upload to private pypi index
+                            echo "[distutils]" >> ~/.pypirc
+                            echo "index-servers = pypi" >> ~/.pypirc
+                            echo "[pypi]" >> ~/.pypirc
+                            echo "username=$PYPI_USERNAME" >> ~/.pypirc
+                            echo "password=$PYPI_PASSWORD" >> ~/.pypirc
+                            python setup.py sdist bdist_wheel
+                            twine upload dist/*
+                        fi
             -   save_cache:
                     key: deps-py27-{{ checksum "requirements.txt" }}-{{ checksum "requirements-dev.txt" }}
                     paths:
