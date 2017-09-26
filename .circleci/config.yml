@@ -37,7 +37,6 @@ jobs:
             -   image: circleci/python:2.7
                 environment:
                     PIP_EXTRA_INDEX_URL: https://jessie.wheelhouse.praekelt.org/simple/
-                    DJANGO_SETTINGS_MODULE: wapipelines.tests.test_settings
             -   image: circleci/postgres:9.4
                 environment:
                     POSTGRES_USER: circleci
@@ -56,13 +55,13 @@ jobs:
                         ~/venv/bin/pip install -e '.[dev]'
             -   run:
                     name: "Check migrations"
-                    command: ~/venv/bin/django-admin makemigrations --dry-run --check
+                    command: ~/venv/bin/python ./manage.py makemigrations --dry-run --check
             -   run:
                     name: "Flake8"
                     command: ~/venv/bin/flake8 wapipelines
             -   run:
                     name: "Pytest"
-                    command: ~/venv/bin/py.test wapipelines --junitxml=junit/py27.xml
+                    command: ~/venv/bin/py.test --junitxml=junit/py27.xml
             -   deploy:
                     name: Deploy
                     command: |
