@@ -1,0 +1,14 @@
+{% extends "app.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="jumbotron">
+    <h1>👋 Pipelines!</h1>
+    <p>
+      <a class="btn btn-primary btn-lg" href="{% url "social:begin" "google-oauth2" %}" role="button">
+        Log in with Gmail
+      </a>
+    </p>
+  </div>
+</div>
+{% endblock %}

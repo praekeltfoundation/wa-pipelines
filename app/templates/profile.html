@@ -1,0 +1,36 @@
+{% extends "app.html" %}
+
+{% block content_app %}
+<div class="container-fluid">
+    <h2>Profile for {{ user.get_full_name }}</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <tr>
+                <th>Name</th>
+                <td>{{user.get_full_name}}</td>
+            </tr>
+            <tr>
+                <th>Email address</th>
+                <td>{{user.email}}</td>
+            </tr>
+            <tr>
+                <th>API key</th>
+                <td>
+                    <p><code>{{user.auth_token.key}}</code></p>
+<pre>
+<code>curl \
+    -X GET \
+    -H 'Authorization: Token {{user.auth_token.key}}' \
+    -H 'Content-Type: application/json' \
+    -H 'Accept: application/json' \
+    {{site_root}}/api/v1/pipelines/</code></pre>
+                </td>
+            </tr>
+            <tr>
+                <th>Docs</th>
+                <td><a href="{% url 'api-docs:docs-index' %}">Pipelines API v1 docs</a></td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

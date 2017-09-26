@@ -16,3 +16,4 @@ CACHE/
 *.pid
 dist/
 build/*
+.env
